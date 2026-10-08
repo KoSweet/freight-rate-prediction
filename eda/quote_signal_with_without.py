@@ -34,7 +34,7 @@ for b, val in list(zip(b1, [r[2] for r in rows])) + list(zip(b2, [r[3] for r in 
     ax.text(b.get_x() + b.get_width() / 2, val + 0.06, f"{val:.2f}%", ha="center", fontsize=9.5, color=INK)
 ax.set(xticks=x, xticklabels=[f"test {r[0]}\n({r[1]} month)" for r in rows], ylabel="Error on that month (mean absolute %)", ylim=(0, max(r[3] for r in rows) * 1.3),
        title="Same model, trained with and without quote_signal. On the one random month, August, the error more than doubles.")
-ax.grid(axis="x", visible=False); ax.legend(frameon=False, loc="upper right")
+ax.grid(axis="x", visible=False); ax.legend(frameon=False, loc="upper left")
 i = [r[0] for r in rows].index("Aug"); ax.annotate("November and December\nare random months like August", xy=(i + w / 2, rows[i][3]), xytext=(i + 0.9, rows[i][3] * 1.08),
     fontsize=9.5, color=INK2, arrowprops=dict(arrowstyle="->", color=INK2, lw=1))
 fig.tight_layout(); fig.savefig(ROOT / "eda" / "figures" / "19_quote_signal_with_without.png", bbox_inches="tight"); print("wrote 19")
