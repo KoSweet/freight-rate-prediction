@@ -287,3 +287,19 @@ vs training 2.145. 88% of validation rows have a learned lane adjustment; 1,447 
 December chart: $824–$841, mean $833, weekly wiggle ±1%; training Dry Van median on the lane $808 (n=21).
 score.py: both files validated, chart written to scorer_results/candidate_december.png.
 Tests: `tests/test_features.py`, 4 passing. One-command run: `run_all.sh`.
+
+### CatBoost check (2026-10-08)
+
+Same four forward folds, same 23 features, CatBoost 1.2.10 (400 it, depth 6, lr 0.08) in place of the
+scikit-learn booster. Optional: catboost is not in requirements.txt; LightGBM/XGBoost were not run because
+they need the libomp system library on macOS and are the same model family.
+
+| Model | Avg error | Worst fold | Folds |
+|---|---|---|---|
+| FINAL: linear + sklearn GBM + lane | 1.703% | 1.93% | 1.73 / 1.93 / 1.66 / 1.49 |
+| linear + CatBoost + lane | 1.711% | 1.94% | 1.74 / 1.94 / 1.67 / 1.50 |
+| linear + CatBoost, no lane | 1.764% | 1.97% | 1.79 / 1.97 / 1.72 / 1.57 |
+| CatBoost alone | 1.897% | 2.11% | 1.90 / 2.11 / 1.85 / 1.73 |
+
+Swapping the tree library changes the result by 0.008 points; the structure (linear backbone, lane term)
+is what matters. Keeps the chosen model.

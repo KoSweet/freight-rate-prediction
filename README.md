@@ -48,6 +48,8 @@ are not meaningful; the chosen model wins on every fold.
 Linear model on log(price) → gradient-boosted trees (400, 15 leaves, early stopping off) on its residuals →
 shrunk per-lane residual mean (0 for unseen lanes). Forward-fold error 1.70% mean absolute percentage
 (≈ $40 per load), bias −0.6%, vs 1.87% linear alone and 1.92% trees alone.
+Swapping the booster for CatBoost in the same structure gives 1.71%; CatBoost alone 1.90%. Random forest,
+extra-trees, k-NN, a neural net and polynomial ridge were also tried (`src/step5_sweep.py`); none beat it.
 
 Expected Nov–Dec error on genuine prices: **≈1.5–1.9% if the price level stays at the Sep–Oct level**
 (every input says it does), **3–6% if the level shifts**. Spotter's measured error will be higher by the
