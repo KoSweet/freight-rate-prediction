@@ -303,3 +303,9 @@ they need the libomp system library on macOS and are the same model family.
 
 Swapping the tree library changes the result by 0.008 points; the structure (linear backbone, lane term)
 is what matters. Keeps the chosen model.
+
+Decision on extra libraries (2026-10-08): CatBoost was tested as a one-off check and gave a result within
+0.01 points of the chosen model, which is a tie on overlapping folds. It is not part of Spotter's provided
+requirements, so it was uninstalled and is not used anywhere in the pipeline. LightGBM and XGBoost were
+installed but never ran, because they need the libomp system library on macOS; both were uninstalled too.
+The submission runs on the provided requirements plus scikit-learn and pytest only.
