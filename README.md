@@ -9,6 +9,7 @@ to produce the fixed December chart for the Lexington to Fort Wayne lane.
 - `validation_predictions.csv`: `load_id,predicted_rate` for all 12,000 loads, in template order
 - `data/december_chart_inputs.csv`: the 31 December rows with `predicted_rate` filled in
 - `scorer_results/candidate_december.png`: the chart produced by the provided `score.py`
+- `report/Freight_Rate_Report.docx`: the written report (validation approach, data split, findings, model, December chart)
 - `cleaned-datasets/CLEANING_LOG.md`: every cleaning decision and the evidence behind it
 - `cleaned-datasets/MODELING_NOTES.md`: feature and model decisions, with all test results
 
@@ -124,6 +125,8 @@ mile. In August, November and December it is random. Its correlation with log di
 without any prices: about -0.80, +0.81 and 0. November scores 0.009 and December 0.013, so the column is
 random for the months being predicted and is left out of the model. Full table in
 `cleaned-datasets/MODELING_NOTES.md`.
+
+![quote_signal regimes](eda/figures/18_quote_signal_regimes.png)
 
 **The chosen model wins on every forward fold.**
 
