@@ -328,3 +328,19 @@ correlation would miss were tested. None holds.
 
 Conclusion stands: in the months being predicted the column is pure noise with no usable information,
 per load or in aggregate. In seven training months it is a leak of the target and must not be used.
+
+### Direct test: train WITH quote_signal and see (2026-10-08)
+
+Same final model, trained with and without the column, tested one month at a time.
+
+| Train -> test | Test month regime | Without quote | With quote | quote x distance alone |
+|---|---|---|---|---|
+| Jan-Jul -> Aug | random (like Nov-Dec) | 1.54% | **3.42%** | 12.65% |
+| Jan-Aug -> Sep | copy | 1.95% | 1.50% | 0.81% |
+| Jan-Sep -> Oct | mirror | 1.49% | 1.49% | 18.60% |
+| Jan-Jun -> Jul | mirror | 2.37% | 1.89% | 18.97% |
+
+When the test month still carries the leak, the model exploits it and looks better. When the test month
+is random, the model keeps trusting a column that has become noise and the error more than doubles.
+Nov and Dec are random months, so including quote_signal would be expected to roughly double the error.
+This is the strongest single piece of evidence for excluding it.
