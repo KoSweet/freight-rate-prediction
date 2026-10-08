@@ -1,81 +1,112 @@
-# Freight Rate Prediction — Spotter ML assessment
+# Freight Rate Prediction
 
-Predicts the posted rate for 12,000 truck loads in Nov–Dec 2025 from 48,000 labelled loads in Jan–Oct 2025,
-and produces the fixed December chart for Lexington → Fort Wayne.
+Solution for the Spotter machine learning assessment. The task is to predict the posted rate for 12,000
+truck loads in November and December 2025, using 48,000 labelled loads from January to October 2025, and
+to produce the fixed December chart for the Lexington to Fort Wayne lane.
 
-**Deliverables in this repo**
-- `validation_predictions.csv` — `load_id,predicted_rate` for all 12,000 loads (template order)
-- `outputs/december-chart-inputs.csv` — the 31 December rows with `predicted_rate` filled
-- `scorer_results/candidate_december.png` — produced by Spotter's `assessment-data/score.py`
-- `cleaned-datasets/CLEANING_LOG.md` and `cleaned-datasets/MODELING_NOTES.md` — every decision with the evidence
+## Files to review
 
-## Run
+- `validation_predictions.csv`: `load_id,predicted_rate` for all 12,000 loads, in template order
+- `data/december_chart_inputs.csv`: the 31 December rows with `predicted_rate` filled in
+- `scorer_results/candidate_december.png`: the chart produced by the provided `score.py`
+- `cleaned-datasets/CLEANING_LOG.md`: every cleaning decision and the evidence behind it
+- `cleaned-datasets/MODELING_NOTES.md`: feature and model decisions, with all test results
+
+## How to run
 
 ```bash
-python3 -m venv env && source env/bin/activate
-pip install -r requirements.txt
-./run_all.sh            # raw files -> cleaned data -> features -> model comparison -> predictions -> score.py
-python -m pytest -q     # 4 pipeline tests
+python3 -m venv env
+source env/bin/activate
+python -m pip install -r requirements.txt
+./run_all.sh
+python -m pytest -q
 ```
 
-Raw inputs live in `assessment-data/` (train-test.csv, validation.csv, the template, december-chart-inputs.csv, score.py).
-`run_all.sh` takes about two minutes. `python src/step5_sweep.py` reproduces the broader model sweep (~2 min more).
+`run_all.sh` goes from the raw files to both output files and the chart in about two minutes. It finishes
+by running the provided scorer with the command from the assessment README:
+
+```bash
+python score.py --predictions validation_predictions.csv --december-predictions data/december_chart_inputs.csv
+```
+
+Raw inputs are in `data/`. The assessment brief and its README are in `docs/`.
 
 ## Pipeline
 
 | Step | Script | What it does |
 |---|---|---|
-| 1 | `src/step1_flip_sign.py` | 292 / 145 negative weights → positive (magnitudes are real weights) |
-| 2 | `src/step2_fill_blanks.py` | blank weight → training median; blank market_index → same-day mean (fallback: same weekday ±1 week) |
-| 3 | `src/step3_remove_bad_prices.py` | drop 677 training rows (1.4%) priced 2–5× or 0.2–0.5× the expected rate; validation untouched |
-| 4 | `src/step4_features.py` | 23 features: log distance, equipment, weight, weekday, short-term market signal, coordinates, symmetric city effects with a nearest-3-cities fallback for 8 unseen cities |
-| 5 | `src/step5_model.py` | model choice on four forward-in-time folds; `src/step5_sweep.py` = wider sweep |
-| 6 | `src/step6_predict.py` | fit on all Jan–Oct, +0.6% level anchor, write both files, run `score.py` |
+| 1 | `src/step1_flip_sign.py` | Makes 292 training and 145 validation negative weights positive. The sizes are real weights with a wrong sign. |
+| 2 | `src/step2_fill_blanks.py` | Fills blank weights with the training median. Fills blank market_index values with the same-day average. |
+| 3 | `src/step3_remove_bad_prices.py` | Removes 677 training rows (1.4%) priced 2 to 5 times too high or 0.2 to 0.5 times too low. Validation is never trimmed. |
+| 4 | `src/step4_features.py` | Builds 23 features: log distance, equipment, weight, weekday, a short-term market signal, coordinates, and city effects with a nearest-cities fallback for 8 unseen cities. |
+| 5 | `src/step5_model.py` | Compares models on forward-in-time folds. `src/step5_sweep.py` runs the wider sweep. |
+| 6 | `src/step6_predict.py` | Fits on all of January to October, applies a 0.6% level anchor, writes both files, runs `score.py`. |
 
-Charts for every step are in `eda/figures/`; `notebooks/01_eda.ipynb` is the exploratory walkthrough.
+Charts for each step are in `eda/figures/`. `notebooks/01_eda.ipynb` is the exploration walkthrough.
 
-## Validation approach
+## How the data was split and validated
 
-The task is a forecast: train on Jan–Oct, predict Nov–Dec. So the model is selected on **forward-in-time
-folds** (train Jan–Aug → test Sep–Oct, Jan–Jun → Jul–Aug, Jan–Jul → Aug–Oct, Jan–Sep → Oct), with every
-learned component (fill values, city effects, lane adjustments) refitted inside each fold. A stratified
-random split was tried and rejected: it reported 5.4% error for a model with seasonal features that scored
-9.7% out of time. Folds overlap (Sep and Oct appear in three test sets), so differences under ~0.05 points
-are not meaningful; the chosen model wins on every fold.
+The task is a forecast: train on January to October, predict November and December. So models were chosen
+on forward-in-time folds that copy that shape: train January to August and test September to October, train
+January to June and test July to August, train January to July and test August to October, and train January
+to September and test October. Every learned part of the pipeline (fill values, city effects, lane terms) is
+refitted inside each fold.
+
+A stratified random split was tried first and rejected. It reported 5.4% error for a model with seasonal
+features that scored 9.7% when tested on later months. Random splits cannot see anything that changes
+over time, and this task is about change over time.
+
+The folds overlap, since September and October appear in three of the four test sets, so differences below
+about 0.05 points are not meaningful. The chosen model wins on every fold, not only on average.
 
 ## Model
 
-Linear model on log(price) → gradient-boosted trees (400, 15 leaves, early stopping off) on its residuals →
-shrunk per-lane residual mean (0 for unseen lanes). Forward-fold error 1.70% mean absolute percentage
-(≈ $40 per load), bias −0.6%, vs 1.87% linear alone and 1.92% trees alone.
-Swapping the booster for CatBoost in the same structure gave 1.71% (a tie); CatBoost is not in the provided
-requirements, so it was removed again and nothing in the pipeline uses it. Random forest,
-extra-trees, k-NN, a neural net and polynomial ridge were also tried (`src/step5_sweep.py`); none beat it.
+A linear model on log(price), then gradient-boosted trees fitted to its residuals (400 trees, 15 leaves,
+early stopping off), then a shrunk per-lane residual mean that is zero for lanes not seen in training.
 
-Expected Nov–Dec error on genuine prices: **≈1.5–1.9% if the price level stays at the Sep–Oct level**
-(every input says it does), **3–6% if the level shifts**. Spotter's measured error will be higher by the
-share of bad prices in the answer key (~1.4% of rows at 2–5× off, undetectable without the price).
+| Model | Forward-fold error | Worst fold |
+|---|---|---|
+| Linear, trees on residuals, lane term (chosen) | 1.70% | 1.93% |
+| Linear, trees on residuals | 1.76% | 1.97% |
+| Linear only | 1.87% | 2.06% |
+| Trees only | 1.90% | 2.11% |
+
+Random forest, extra-trees, k-nearest neighbours, a neural net and polynomial ridge were also tried and
+none beat the chosen model. CatBoost in the same structure gave 1.71%, a tie. It is not in the provided
+requirements, so it was removed again and nothing in the pipeline uses it.
+
+Expected error on genuine November and December prices: about 1.5 to 1.9% if the price level stays where it
+was in September and October, which every input suggests, and 3 to 6% if the level shifts. The scored error
+will be higher by the share of bad prices in the answer key, since about 1.4% of rows carry prices 2 to 5
+times off and cannot be detected without the price.
 
 ## Key findings
 
-- Price is a near-perfect power law in distance (log–log correlation 0.97); rate per mile falls from $2.80 under
-  200 mi to $1.87 over 2,500 mi. Reefer +12%, Flatbed +8% vs Dry Van. Location is worth ~1 point of error.
-- **quote_signal is planted.** In Jan, Feb, Mar, Jun, Sep it *is* the rate per mile (0.8% MAPE on its own);
-  in Apr, May, Jul, Oct it is 4.15 − rate per mile; in Aug, Nov, Dec it is random. Its correlation with
-  log distance identifies the regime without prices (−0.80 / +0.81 / ≈0): **Nov 0.009, Dec 0.013 → random**,
-  so it is excluded from the final model.
-- Raw market_index is harmful out of time (its effect decays from +18% to +8% per unit over the year and
-  it takes credit for a slow price drift); only its short-term deviation from a 28-day level is used.
-  No month / day-of-year / trend features: they extrapolate badly (+4 to +8% bias).
-- Remaining error ≈ 1% irreducible row noise (measured from the clean-quote months) plus a day-level drift
-  that no input forecasts.
+- Price follows distance almost perfectly on log scales (correlation 0.97). Rate per mile falls from $2.80
+  under 200 miles to $1.87 over 2,500 miles. Reefer costs about 12% more per mile than Dry Van, Flatbed
+  about 8% more. Location is worth about one point of error.
+- quote_signal is planted. In January, February, March, June and September it is the rate per mile and
+  predicts price with 0.8% error on its own. In April, May, July and October it is 4.15 minus the rate per
+  mile. In August, November and December it is random. Its correlation with log distance tells the regime
+  without any prices: about -0.80, +0.81 and 0. November scores 0.009 and December 0.013, so the column is
+  random for the months being predicted and is left out of the model.
+- The raw market_index hurts when used across time. Its effect falls from 18% to 8% per unit over the year
+  and it takes credit for a slow price drift. Only its short-term deviation from a 28-day level is used. No
+  month, day-of-year or trend features are used, because they extrapolate badly.
+- The error that remains is about 1% unavoidable row noise, measured from the months where quote_signal
+  reveals the exact price, plus a day-level drift that none of the inputs can forecast.
 
-## Assumptions and caveats
+## Assumptions
 
-- Nov–Dec follow the same rules as Jan–Oct. All inputs match Sep–Oct; no holiday effect exists in training.
-- The market signal uses a centred 28-day window, so the model is batch-scored (validation ships all dates).
-- City effects and the lane adjustment are fitted in-sample on the training rows (≈1,500 rows per city end;
-  out-of-fold fitting of the lane term was checked and gains nothing).
-- Step 2's weight median and step 3's expected prices are computed once on all Jan–Oct rows (negligible leak
-  into the folds; the city/lane terms, which matter, are refitted per fold).
-- Log target ≈ conditional median: optimal for MAE/MAPE, slightly low for RMSE. Spotter's metric is unknown.
+- November and December follow the same rules as January to October. All inputs match September and
+  October, and training shows no holiday effects.
+- The market signal uses a centred 28-day window, so the model is scored in batch. The validation file
+  ships all dates, so this is fine here.
+- City effects and the lane term are fitted on the training rows without holding rows out. With about
+  1,500 rows per city end this is harmless, and fitting the lane term out of fold was checked and gains
+  nothing.
+- The weight median in step 2 and the expected prices in step 3 are computed once on all of January to
+  October. The leak into the folds is negligible. The city and lane terms, which matter, are refitted per
+  fold.
+- Predicting log(price) targets the median. That is right for mean absolute error and percentage error,
+  and slightly low for root mean squared error. The scoring metric was not given.

@@ -1,7 +1,7 @@
 """Step 4: feature engineering.
 
 Run:  python src/step4_features.py
-Reads  cleaned-datasets/step3_train.csv, step3_validation.csv, assessment-data/december-chart-inputs.csv
+Reads  cleaned-datasets/step3_train.csv, step3_validation.csv, data/december_chart_inputs.csv
 Writes cleaned-datasets/step4_train_features.csv
        cleaned-datasets/step4_validation_features.csv
        cleaned-datasets/step4_december_features.csv
@@ -30,7 +30,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 CLEAN = ROOT / "cleaned-datasets"
-RAW = ROOT / "assessment-data"
+RAW = ROOT / "data"
 ART = CLEAN / "artifacts"
 MI_WINDOW_DAYS = 28
 N_NEAREST = 3
@@ -165,7 +165,7 @@ class FeatureBuilder:
 
 
 def load_december() -> pd.DataFrame:
-    dec = pd.read_csv(RAW / "december-chart-inputs.csv")
+    dec = pd.read_csv(RAW / "december_chart_inputs.csv")
     return dec.drop(columns=["predicted_rate"])
 
 

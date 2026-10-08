@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "assessment-data"
+DATA = ROOT / "data"
 OUT = ROOT / "eda" / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -39,7 +39,7 @@ def save(fig, name):
 
 
 # ---------------------------------------------------------------- load
-train = pd.read_csv(DATA / "train-test.csv", parse_dates=["date"])
+train = pd.read_csv(DATA / "train_test.csv", parse_dates=["date"])
 val = pd.read_csv(DATA / "validation.csv", parse_dates=["date"])
 train["rpm"] = train.posted_rate / train.distance
 LO, HI = 0.8, 5.0  # rate-per-mile band outside which we call a label an outlier

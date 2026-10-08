@@ -7,10 +7,10 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW, OUT = ROOT / "assessment-data", ROOT / "cleaned-datasets"
+RAW, OUT = ROOT / "data", ROOT / "cleaned-datasets"
 OUT.mkdir(exist_ok=True)
 
-for src, dst in [("train-test.csv", "step1_train.csv"), ("validation.csv", "step1_validation.csv")]:
+for src, dst in [("train_test.csv", "step1_train.csv"), ("validation.csv", "step1_validation.csv")]:
     df = pd.read_csv(RAW / src)
     neg = df.weight < 0
     df.loc[neg, "weight"] = df.loc[neg, "weight"].abs()

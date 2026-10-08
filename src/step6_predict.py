@@ -2,11 +2,11 @@
 
 Run:  python src/step6_predict.py
 Reads  cleaned-datasets/step3_train.csv, step3_validation.csv
-       assessment-data/validation-predictions-template.csv, december-chart-inputs.csv
+       data/validation_predictions_template.csv, december_chart_inputs.csv
 Writes validation_predictions.csv                  (load_id, predicted_rate; template order)
-       outputs/december-chart-inputs.csv           (the 7 original columns, predicted_rate filled)
+       data/december_chart_inputs.csv           (the 7 original columns, predicted_rate filled)
        outputs/final_model_summary.txt
-       scorer_results/candidate_december.png       (via assessment-data/score.py)
+       scorer_results/candidate_december.png       (via score.py)
 
 Level anchor: the model has no time features, so its level is the Jan-Oct average. Nov-Dec inputs match
 Sep-Oct (MODELING_NOTES.md), so predictions are shifted by the model's mean log residual on Sep-Oct rows.
@@ -27,8 +27,8 @@ ANCHOR_MONTHS = (9, 10)
 def main() -> None:
     train = pd.read_csv(f4.CLEAN / "step3_train.csv", parse_dates=["date"])
     val = pd.read_csv(f4.CLEAN / "step3_validation.csv", parse_dates=["date"])
-    template = pd.read_csv(f4.RAW / "validation-predictions-template.csv")
-    dec_raw = pd.read_csv(f4.RAW / "december-chart-inputs.csv")
+    template = pd.read_csv(f4.RAW / "validation_predictions_template.csv")
+    dec_raw = pd.read_csv(f4.RAW / "december_chart_inputs.csv")
     dec = dec_raw.drop(columns=["predicted_rate"])
 
     # features: coordinates and the daily market series are inputs and may use both files; everything learned uses train only
@@ -52,7 +52,7 @@ def main() -> None:
 
     # December file: original seven columns, same order, predicted_rate filled
     dec_out = dec_raw.copy(); dec_out["predicted_rate"] = np.round(pred_dec, 2)
-    dec_out.to_csv(OUT / "december-chart-inputs.csv", index=False)
+    dec_out.to_csv(f4.RAW / "december_chart_inputs.csv", index=False)  # filled in place, as the assessment README asks
 
     # summary
     lane_dv = train[(train.pickup == "Lexington") & (train.delivery == "Fort Wayne") & (train.equipment == "Dry Van")].posted_rate
@@ -71,9 +71,8 @@ def main() -> None:
 
     # Spotter's format checker + chart
     print("\n--- score.py ---")
-    r = subprocess.run([sys.executable, str(f4.RAW / "score.py"), "--predictions", str(ROOT / "validation_predictions.csv"),
-                        "--december-predictions", str(OUT / "december-chart-inputs.csv"), "--output-dir", str(ROOT / "scorer_results")],
-                       capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "score.py", "--predictions", "validation_predictions.csv",
+                        "--december-predictions", "data/december_chart_inputs.csv"], cwd=ROOT, capture_output=True, text=True)
     print(r.stdout.strip()); print(r.stderr.strip()) if r.stderr.strip() else None
     if r.returncode != 0: raise SystemExit("score.py failed")
 

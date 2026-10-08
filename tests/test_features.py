@@ -37,6 +37,6 @@ def test_fit_is_deterministic():
 
 def test_december_rows_transform_without_coordinates_or_market_index():
     fb = f4.FeatureBuilder(city_table, market).fit(train)
-    dec = pd.read_csv(f4.RAW / "december-chart-inputs.csv").drop(columns=["predicted_rate"])
+    dec = pd.read_csv(f4.RAW / "december_chart_inputs.csv").drop(columns=["predicted_rate"])
     X, _ = fb.transform(dec)
     assert len(X) == 31 and X.isna().sum().sum() == 0 and X.mi_short.abs().max() < 0.5

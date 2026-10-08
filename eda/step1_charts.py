@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW, CLEAN, OUT = ROOT / "assessment-data", ROOT / "cleaned-datasets", ROOT / "eda" / "figures"
+RAW, CLEAN, OUT = ROOT / "data", ROOT / "cleaned-datasets", ROOT / "eda" / "figures"
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, INK2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 plt.rcParams.update({"figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "axes.edgecolor": "#9a9891",
@@ -14,7 +14,7 @@ plt.rcParams.update({"figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "ax
     "grid.color": GRID, "grid.linewidth": 0.8, "axes.spines.top": False, "axes.spines.right": False,
     "font.size": 10.5, "axes.titlesize": 12.5, "axes.titleweight": "bold", "axes.titlelocation": "left", "figure.dpi": 150})
 
-raw = pd.read_csv(RAW / "train-test.csv")
+raw = pd.read_csv(RAW / "train_test.csv")
 s1 = pd.read_csv(CLEAN / "step1_train.csv")
 
 # ---- 07: weight before / after sign flip
