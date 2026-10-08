@@ -128,6 +128,11 @@ random for the months being predicted and is left out of the model. Full table i
 
 ![quote_signal regimes](eda/figures/18_quote_signal_regimes.png)
 
+Training the same model with the column and testing one month at a time shows the trap: it helps on months
+that still carry the leak and more than doubles the error on August, the only random month with known prices.
+
+![quote_signal with and without](eda/figures/19_quote_signal_with_without.png)
+
 **The chosen model wins on every forward fold.**
 
 ![Model comparison](eda/figures/17_step5_model_comparison.png)
