@@ -309,3 +309,22 @@ Decision on extra libraries (2026-10-08): CatBoost was tested as a one-off check
 requirements, so it was uninstalled and is not used anywhere in the pipeline. LightGBM and XGBoost were
 installed but never ran, because they need the libomp system library on macOS; both were uninstalled too.
 The submission runs on the provided requirements plus scikit-learn and pytest only.
+
+### quote_signal in the random months: three remaining doubts tested (2026-10-08)
+
+Could the column still carry information in Aug, Nov, Dec? Three mechanisms that a month-level
+correlation would miss were tested. None holds.
+
+1. Day-level mixture (some days copy, some days mirror, cancelling to zero over the month).
+   Per-day correlation of quote with log distance: Jan every day -0.77 to -0.89; Apr every day +0.72 to
+   +0.86; Aug, Nov, Dec every single day between -0.17 and +0.21. No copy or mirror days exist.
+2. Shuffled copy (prices permuted across rows, which would reveal the month's price level through the
+   mean). Aug quote: mean 2.053, std 0.223, 5-95% 1.69-2.42. Aug real price per mile: mean 2.162,
+   std 0.261, 5-95% 1.82-2.66. Different shape, lower, narrower. Nov and Dec quote are identical to Aug
+   (2.055 / 2.048, std 0.220 / 0.219) although real monthly levels vary from 2.07 to 2.30. It is a fixed
+   noise distribution, not shuffled prices, so its mean says nothing about the Nov-Dec level.
+3. Non-linear structure. Quote mean by distance decile in Aug/Nov/Dec spans 0.02-0.04 (Jan: 0.72);
+   identical across equipment types; |quote - 2.05| uncorrelated with distance. No hidden shape.
+
+Conclusion stands: in the months being predicted the column is pure noise with no usable information,
+per load or in aggregate. In seven training months it is a leak of the target and must not be used.
