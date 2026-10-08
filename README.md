@@ -60,6 +60,13 @@ over time, and this task is about change over time.
 The folds overlap, since September and October appear in three of the four test sets, so differences below
 about 0.05 points are not meaningful. The chosen model wins on every fold, not only on average.
 
+## Features
+
+The model sees 23 numeric columns. About half are reshaped raw columns, the rest were built for this
+model, and four obvious candidates were left out on evidence. The table below is also in `eda/figures/`.
+
+![Feature table](eda/figures/20_features_table.png)
+
 ## Model
 
 A linear model on log(price), then gradient-boosted trees fitted to its residuals (400 trees, 15 leaves,
