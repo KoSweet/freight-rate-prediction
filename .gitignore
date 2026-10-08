@@ -7,3 +7,4 @@ __pycache__/
 cleaned-datasets/*.csv
 !cleaned-datasets/step5_model_comparison.csv
 !cleaned-datasets/step5_sweep_results.csv
+catboost_info/
