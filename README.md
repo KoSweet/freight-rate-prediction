@@ -82,19 +82,62 @@ times off and cannot be detected without the price.
 
 ## Key findings
 
-- Price follows distance almost perfectly on log scales (correlation 0.97). Rate per mile falls from $2.80
-  under 200 miles to $1.87 over 2,500 miles. Reefer costs about 12% more per mile than Dry Van, Flatbed
-  about 8% more. Location is worth about one point of error.
-- quote_signal is planted. In January, February, March, June and September it is the rate per mile and
-  predicts price with 0.8% error on its own. In April, May, July and October it is 4.15 minus the rate per
-  mile. In August, November and December it is random. Its correlation with log distance tells the regime
-  without any prices: about -0.80, +0.81 and 0. November scores 0.009 and December 0.013, so the column is
-  random for the months being predicted and is left out of the model.
-- The raw market_index hurts when used across time. Its effect falls from 18% to 8% per unit over the year
-  and it takes credit for a slow price drift. Only its short-term deviation from a 28-day level is used. No
-  month, day-of-year or trend features are used, because they extrapolate badly.
-- The error that remains is about 1% unavoidable row noise, measured from the months where quote_signal
-  reveals the exact price, plus a day-level drift that none of the inputs can forecast.
+Each finding links to the chart that shows it. All charts are in `eda/figures/`.
+
+**Price follows distance almost perfectly on log scales** (correlation 0.97). Rate per mile falls from
+$2.80 under 200 miles to $1.87 over 2,500 miles. Reefer costs about 12% more per mile than Dry Van,
+Flatbed about 8% more. Location is worth about one point of error.
+
+![Rate vs distance](eda/figures/01_rate_vs_distance.png)
+![Rate per mile vs distance](eda/figures/04_rpm_vs_distance_binned.png)
+![Rate per mile by equipment](eda/figures/02_rpm_by_equipment.png)
+
+**Prices drift through the year.** Cheapest in January, peak in June, then a plateau. The validation months
+are outside the training window, which is why the split must be time based.
+
+![Rate per mile by month](eda/figures/03_rpm_by_month.png)
+
+**Four data-quality issues, all small.** Blank weights, blank market_index values, negative weights, and
+about 1.4% of prices that are 2 to 5 times off. The same issues appear in the validation file, so the
+cleaning is one shared function. The weight sign flip and the bad-price removal are shown below.
+
+![Data quality counts](eda/figures/05_data_quality.png)
+![Weight sign flip](eda/figures/07_step1_weight_sign_flip.png)
+![Bad prices removed](eda/figures/13_step3_before_after.png)
+
+**Eight validation cities never appear in training**, touching 12% of validation rows. Coordinates and a
+nearest-cities fallback handle them. The map shows the learned city effects and the fallback values.
+
+![City coverage](eda/figures/06_city_coverage.png)
+![City effects and fallbacks](eda/figures/14_step4_city_effects_map.png)
+
+**market_index is a daily market level with a weekly cycle.** Blanks are filled from the same day's
+other loads, which recovers hidden values to within 0.016. Used raw it hurts across time, so only its
+short-term deviation from a 28-day level is a feature.
+
+![market_index fill](eda/figures/10_step2_market_index_fill.png)
+![Fill method comparison](eda/figures/12_step2_fill_method_comparison.png)
+
+**quote_signal is planted.** In January, February, March, June and September it is the rate per mile and
+predicts price with 0.8% error on its own. In April, May, July and October it is 4.15 minus the rate per
+mile. In August, November and December it is random. Its correlation with log distance tells the regime
+without any prices: about -0.80, +0.81 and 0. November scores 0.009 and December 0.013, so the column is
+random for the months being predicted and is left out of the model. Full table in
+`cleaned-datasets/MODELING_NOTES.md`.
+
+**The chosen model wins on every forward fold.**
+
+![Model comparison](eda/figures/17_step5_model_comparison.png)
+
+**What drives the December chart.** Only the weekday and the short-term market signal change across the
+31 rows, so the chart shows a weekly cycle of about 1% around $833. The training median for Dry Van on
+this lane is $808.
+
+![December inputs](eda/figures/16_step4_december_inputs.png)
+![December chart](scorer_results/candidate_december.png)
+
+**The error that remains** is about 1% unavoidable row noise, measured from the months where quote_signal
+reveals the exact price, plus a day-level drift that none of the inputs can forecast.
 
 ## Assumptions
 
