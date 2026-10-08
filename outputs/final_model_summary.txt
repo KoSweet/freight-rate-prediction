@@ -1,0 +1,8 @@
+Final model: linear (log price) + GBM(400 trees, 15 leaves, early stopping off) on residuals + per-lane residual mean (k=20)
+trained on 47,323 rows (Jan-Oct 2025, bad prices removed); 23 features; 64 city effects
+level anchor (mean log residual on Sep-Oct training rows): +0.61%
+validation: 12,000 predictions, $197 to $6,909, median $2,048
+rate per mile: training median 2.145, predicted validation median 2.155
+rows touching an unseen city: 1,447 (fallback effects: Norfolk -1.6%, Allentown -2.0%, Knoxville +0.1%, Laredo +2.4%, Jackson +2.4%, Charlotte -0.2%, Chicago -1.3%, San Diego +0.4%)
+lanes with a learned lane adjustment: 88% of validation rows
+December chart: $824 to $841, mean $833; training Lexington>Fort Wayne Dry Van median $808 (n=21)
